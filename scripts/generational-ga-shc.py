@@ -69,7 +69,13 @@ def generate_schemas_from_solution(bitstring, original=None, index=0) -> list:
     #         schemata.append("*")
     #     else:
 
-    
+def count_schemata(schemata: list, counts_dict: dict) -> dict:
+    for element in schemata:
+        if element in counts_dict.keys():
+            counts_dict[element] += 1
+        else:
+            counts_dict[element] = 1
+    return counts_dict    
 
 def generate_schemas_from_population(population:list, schemata_set:list) -> list:
     """Given a population of `nbit` length bitstring solutions, this returns all wildcard allele schemas present in that population.
@@ -466,7 +472,10 @@ if __name__ == "__main__":
     test_pop = ["0000000000000000", "0101010101010101", "1100110011001100"]
     # schemata = generate_alL_schemas(nbits=nbits)
     # generate_schemas_from_population(population=test_pop, schemata_set=schemata)
-    test_schemata = generate_schemas_from_solution(bitstring=test_pop[0])
+    counts = {}
+    for s in test_pop:
+        test_schemata = generate_schemas_from_solution(bitstring=s)
+        counts = count_schemata(schemata=test_schemata, counts_dict=counts)
     pass
 
     sim_configs = {

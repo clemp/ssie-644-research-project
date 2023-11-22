@@ -357,101 +357,101 @@ def GA(
             # Store results
             generation_fitnesses.append((solution, fitness))
 
-    # Rank the initial population (gen 0) to identify the starting optimal solution
-    generation_fitnesses = []
-    for solution in population:
-        # Decode into x,y points for fitness testing
-        bitx = solution[:xycutpoint]
-        bity = solution[xycutpoint:]
+        # Rank the initial population (gen 0) to identify the starting optimal solution
+        generation_fitnesses = []
+        for solution in population:
+            # Decode into x,y points for fitness testing
+            bitx = solution[:xycutpoint]
+            bity = solution[xycutpoint:]
+            
+            x, y = decode(bitstring=solution, cutpoint=xycutpoint, bounds=bounds)
+
+            # encoded = encode(solution=solution, cutpoint=4, bounds=bounds)
+            # fitness = objective((x,y))
+            fitness = obj_booth((x,y))
+            
+            # Add to list that will be sorted later.
+            generation_fitnesses.append((solution, (x,y), fitness))
+
+        # TODO: implement tournament selection method.
+        # Create the next generation
+        generation_fitnesses = sorted(generation_fitnesses, key=lambda x: x[1])
+        population = [x[0] for x in generation_fitnesses]
+        num_solutions = len(generation_fitnesses)
         
-        x, y = decode(bitstring=solution, cutpoint=xycutpoint, bounds=bounds)
+        # rank and create selection probabilities.
+        sum_ranks = (num_solutions * (num_solutions + 1) / 2)
+        ranks = [round((num_solutions-i)/sum_ranks, 8) for i in range(num_solutions)]
 
-        # encoded = encode(solution=solution, cutpoint=4, bounds=bounds)
-        # fitness = objective((x,y))
-        fitness = obj_booth((x,y))
+        # normalize the ranks (numpy floating decimal issue)
+        ranks = [p/sum(ranks) for p in ranks]
         
-        # Add to list that will be sorted later.
-        generation_fitnesses.append((solution, (x,y), fitness))
+        # generation best solution
+        generation_solution = generation_fitnesses[0]
 
-    # TODO: implement tournament selection method.
-    # Create the next generation
-    generation_fitnesses = sorted(generation_fitnesses, key=lambda x: x[1])
-    population = [x[0] for x in generation_fitnesses]
-    num_solutions = len(generation_fitnesses)
-    
-    # rank and create selection probabilities.
-    sum_ranks = (num_solutions * (num_solutions + 1) / 2)
-    ranks = [round((num_solutions-i)/sum_ranks, 8) for i in range(num_solutions)]
+        # generation best fitness
+        generation_fitness = generation_solution[1]
+        
+        # if this is the first run, intialize the final solution.
+        if final_fitness is False or final_solution is False:
+            final_fitness = generation_fitness
+            final_solution = generation_solution
+        # calculate final fitness
+        elif generation_fitness < final_fitness:
+            final_fitness = generation_fitness
+            final_solution = generation_solution                
 
-    # normalize the ranks (numpy floating decimal issue)
-    ranks = [p/sum(ranks) for p in ranks]
-    
-    # generation best solution
-    generation_solution = generation_fitnesses[0]
+        # Create a new population for the next generation.
+        new_population = []
+        # TODO: create a network model to represent the parent-child relationships
+        # generation_fitnesses = []
+        for i in range(int(n/2)):
+            parents = np.random.choice(population, 2, p=ranks)
 
-    # generation best fitness
-    generation_fitness = generation_solution[1]
-    
-    # if this is the first run, intialize the final solution.
-    if final_fitness is False or final_solution is False:
-        final_fitness = generation_fitness
-        final_solution = generation_solution
-    # calculate final fitness
-    elif generation_fitness < final_fitness:
-        final_fitness = generation_fitness
-        final_solution = generation_solution                
+            # reproduction steps
+            # crossover the parents to create children of the parents with prob Pc
+            if random.random() <= Pc:
+                children = crossover(parents)
+            else:
+                children = parents
+            # mutate the children with prob Pm (per bit)
+            for i, child in enumerate(children):
+                mutation = mutate(child, Pc)
+                children[i] = mutation
 
-    # Create a new population for the next generation.
-    new_population = []
-    # TODO: create a network model to represent the parent-child relationships
-    # generation_fitnesses = []
-    for i in range(int(n/2)):
-        parents = np.random.choice(population, 2, p=ranks)
+                # add the child the the new population this generation
+                new_population.append(children[i])
+        # Save data from this run to a data structure
+        # TODO: save data to a data structure
+        # Replace the previous population with the new population
+        # for the next generation.
+        print("random seed:", seed)
+        print("population id:", idx)
+        print("Pc", Pc)
+        print("Pm:", Pm)
+        print("n:", n)
+        print("max G", gmax)
+        # print("final solution bitstring", vars["final_solution_bit"])
+        print("final solution (x,y)", final_solution)
+        # print("final_fitness:", vars["final_fitness"])
+        # print("worst fitness", vars["worst_fitness"])
+        print("----")
 
-        # reproduction steps
-        # crossover the parents to create children of the parents with prob Pc
-        if random.random() <= Pc:
-            children = crossover(parents)
-        else:
-            children = parents
-        # mutate the children with prob Pm (per bit)
-        for i, child in enumerate(children):
-            mutation = mutate(child, Pc)
-            children[i] = mutation
-
-            # add the child the the new population this generation
-            new_population.append(children[i])
-    # Save data from this run to a data structure
-    # TODO: save data to a data structure
-    # Replace the previous population with the new population
-    # for the next generation.
-    print("random seed:", seed)
-    print("population id:", idx)
-    print("Pc", Pc)
-    print("Pm:", Pm)
-    print("n:", n)
-    print("max G", gmax)
-    # print("final solution bitstring", vars["final_solution_bit"])
-    print("final solution (x,y)", final_solution)
-    # print("final_fitness:", vars["final_fitness"])
-    # print("worst fitness", vars["worst_fitness"])
-    print("----")
-
-    population = new_population.copy()
-    # End this generation run. 
-    # Store results, enter next generations.
-    final_fitnesses.append(final_fitness)
-    fitnesses.append(generation_fitness)
-    generations.append(generation_fitnesses)
-    simulation_dict = {
-        "final_fitness": final_fitness,
-        "final_solution_bit": final_solution[0],
-        "final_solution_xy": final_solution[1],
-        "final_fitnesses": final_fitnesses,
-        "fitnesses": fitnesses,
-        "generations": generations,
-        "worst_fitness": max(fitnesses)
-    }
+        population = new_population.copy()
+        # End this generation run. 
+        # Store results, enter next generations.
+        final_fitnesses.append(final_fitness)
+        fitnesses.append(generation_fitness)
+        generations.append(generation_fitnesses)
+        simulation_dict = {
+            "final_fitness": final_fitness,
+            "final_solution_bit": final_solution[0],
+            "final_solution_xy": final_solution[1],
+            "final_fitnesses": final_fitnesses,
+            "fitnesses": fitnesses,
+            "generations": generations,
+            "worst_fitness": max(fitnesses)
+        }
     return simulation_dict
     
 if __name__ == "__main__":

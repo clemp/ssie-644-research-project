@@ -4,6 +4,29 @@ from collections import Counter
 def generate_id():
     return str(uuid.uuid4())
 
+def order(allele:str) -> int:
+    # number of non wildcard bits
+    return sum(1 for bit in allele if bit != "*")
+
+def length(schema:str) -> int:
+    # find first non-wildcard
+    for i, bit in enumerate(schema):
+        if bit != "*":
+            start = i
+            break
+    # find last non-wildcard
+    for i, bit in enumerate(reversed(schema)):
+        if bit != "*":
+            end = (len(schema)-1)-i
+            break
+        
+    # start = next(bit for bit in allele if bit != "*")
+    # [*,0,0,*,1,*]
+    # [^*]
+    # end = next(bit for bit in reversed(allele) if bit != "*")
+    l = end - start
+    return l
+
 def generate_alL_schemas(nbits: int) -> list:
     """Generates a list of all wildcard schemas of length `nbits`.
 
@@ -51,6 +74,29 @@ def generate_schemas_from_solution(bitstring, original=None, index=0) -> list:
     #         schemata.append(bit)
     #         schemata.append("*")
     #     else:
+def generate_population_from_schemata(schema:str) -> list:
+    """Given a schema, this returns a population of solutions that match that schema.
+
+    Args:
+        schema (str): a schema, eg "010*1*1".
+
+    Returns:
+        list: a list of solutions that match the schema.
+    """
+    if len(set([len(s) for s in schema])) != 1:
+        raise Exception("Schema contains solutions of different lengths. All solutions must be the same length bitstring.")
+    
+    solutions = []
+    for i, bit in enumerate(schema):
+        # if this is the first bit, initialize the schemata list
+        if i == 0:
+            solutions.append(bit)
+            solutions.append("*")
+        else:
+            solutions = [s + bit for s in solutions]
+            solutions += [s + "*" for s in solutions]
+    return solutions
+
 def generate_schemas_from_population(population:list) -> list:
     """Given a population of `nbit` length bitstring solutions, this returns all wildcard allele schemas present in that population.
 
@@ -66,6 +112,7 @@ def generate_schemas_from_population(population:list) -> list:
     schemata = []
     for solution in population:
         schemata_matches = generate_schemas_from_solution(solution)
+        schemata_matches = schemata_matches[:-1] # remove the schema containing only wildcards '***..'
         schemata += schemata_matches
     return schemata
 

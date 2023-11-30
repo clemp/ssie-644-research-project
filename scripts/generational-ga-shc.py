@@ -87,28 +87,6 @@ def generate_schemas_from_population(population:list, schemata_set:list) -> list
         print("wildcard matches:", schemata_matches)
         # wildcard_schemata = 0
     pass
-def order(allele:str) -> int:
-    # number of non wildcard bits
-    return sum(1 for bit in allele if bit != "*")
-
-def length(schema:str) -> int:
-    # find first non-wildcard
-    for i, bit in enumerate(schema):
-        if bit != "*":
-            start = i
-            break
-    # find last non-wildcard
-    for i, bit in enumerate(reversed(schema)):
-        if bit != "*":
-            end = (len(schema)-1)-i
-            break
-        
-    # start = next(bit for bit in allele if bit != "*")
-    # [*,0,0,*,1,*]
-    # [^*]
-    # end = next(bit for bit in reversed(allele) if bit != "*")
-    l = end - start
-    return l
 
 def precision(bounds:dict, solution_length:int) -> float:
     """
@@ -462,21 +440,21 @@ if __name__ == "__main__":
             "y": ybounds
     }
 
-    n = 100   # population size
+    n = 20   # population size
     Pc = 1.00 # crossover probability
     Pm = 0.01  # mutation probability
     gmax = 100 # number of generations
-    nbits = 8 # number of bits in a chromosome / solution
-    xycutpoint = 4 # point in the solution to split into x, y
+    nbits = 4 # number of bits in a chromosome / solution
+    xycutpoint = 2 # point in the solution to split into x, y
 
-    test_pop = ["0000000000000000", "0101010101010101", "1100110011001100"]
-    # schemata = generate_alL_schemas(nbits=nbits)
-    # generate_schemas_from_population(population=test_pop, schemata_set=schemata)
-    counts = {}
-    for s in test_pop:
-        test_schemata = generate_schemas_from_solution(bitstring=s)
-        counts = count_schemata(schemata=test_schemata, counts_dict=counts)
-    pass
+    # test_pop = ["0000000000000000", "0101010101010101", "1100110011001100"]
+    # # schemata = generate_alL_schemas(nbits=nbits)
+    # # generate_schemas_from_population(population=test_pop, schemata_set=schemata)
+    # counts = {}
+    # for s in test_pop:
+    #     test_schemata = generate_schemas_from_solution(bitstring=s)
+    #     counts = count_schemata(schemata=test_schemata, counts_dict=counts)
+    # pass
         
     # BEGIN GENETIC ALGORITHM
     simdata = GA(bounds, Pc, Pm, n, nbits, xycutpoint, gmax)
@@ -494,7 +472,7 @@ if __name__ == "__main__":
         "data": simdata
     }
     idx = generate_id()
-
+    print("Writing data for simulation: ", idx)
     # Create pickle file
     with open(f"./data/{idx}.pickle", "wb") as f:
         pickle.dump(results, f)

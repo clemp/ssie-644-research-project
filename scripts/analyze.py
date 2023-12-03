@@ -110,12 +110,12 @@ if __name__ == '__main__':
                        orient='index')
     df.index.names = ['generation', 'schema']
     # Write data to file
-    fname = "./data/objective/booth/schemata/b38f9a54-ac6f-4e8f-92dc-50df322ca9c1.pickle"
+    output_fname = "./data/objective/booth/schemata/" + fname + ".pickle"
     
-    dir_name = os.path.dirname(fname)
+    dir_name = os.path.dirname(output_fname)
 
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    with open(fname, 'wb') as f:
+    with open(output_fname, 'wb') as f:
         pickle.dump(df, f)

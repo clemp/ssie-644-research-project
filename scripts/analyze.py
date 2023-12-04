@@ -119,3 +119,6 @@ if __name__ == '__main__':
 
     with open(output_fname, 'wb') as f:
         pickle.dump(df, f)
+
+# TODO:
+# Visualize all the points in the fitness landscape by schemata (using the underlying solutions that belong to that schema group)

@@ -259,7 +259,7 @@ def mutate(chromosome:str, pm:float) -> str:
             solution += bit
     return solution
 
-def objective(solution):
+def obj_shc(solution):
     """Six-hump camelback objective function.
 
     Args:
@@ -385,11 +385,11 @@ def GA(
         num_solutions = len(generation_fitnesses)
         
         # rank and create selection probabilities.
-        sum_ranks = (num_solutions * (num_solutions + 1) / 2)
-        ranks = [round((num_solutions-i)/sum_ranks, 8) for i in range(num_solutions)]
+        # sum_ranks = (num_solutions * (num_solutions + 1) / 2)
+        # ranks = [round((num_solutions-i)/sum_ranks, 8) for i in range(num_solutions)]
 
-        # normalize the ranks (numpy floating decimal issue)
-        ranks = [p/sum(ranks) for p in ranks]
+        # # normalize the ranks (numpy floating decimal issue)
+        # ranks = [p/sum(ranks) for p in ranks]
         
         # generation best solution
         generation_solution = generation_fitnesses[0]
@@ -412,8 +412,8 @@ def GA(
         # generation_fitnesses = []
         for i in range(int(n/2)):
             # Tournament selection of parents
-            parent1 = tournament_selection(generation_fitnesses, 4)
-            parent2 = tournament_selection(generation_fitnesses, 4)
+            parent1 = tournament_selection(generation_fitnesses, 6)
+            parent2 = tournament_selection(generation_fitnesses, 6)
             parents = [parent1, parent2]
             # parents = np.random.choice(population, 2, p=ranks)
             
@@ -452,26 +452,26 @@ if __name__ == "__main__":
     # wildcard_schemas = generate_schemas(nbits=nbits)
     # Inialize a random seed then change the random seed 10 times.
     # random_seeds = [random.randint(0,1000) for i in range(10)]
-    seed = 295308
+    seed = 2908
     random.seed(seed)
 
     # Six-hump camelback bounds
-    # xbounds = [-3,3]
-    # ybounds = [-2,2]
+    xbounds = [-3,3]
+    ybounds = [-2,2]
 
     # Booth's equation bounds
-    xbounds = [-10,10]
-    ybounds = [-10,10]
+    # xbounds = [-10,10]
+    # ybounds = [-10,10]
 
     bounds = {
             "x": xbounds,
             "y": ybounds
     }
 
-    n = 50   # population size
+    n = 100   # population size
     Pc = 1.00 # crossover probability
     Pm = 0.01  # mutation probability
-    gmax = 25 # number of generations
+    gmax = 50 # number of generations
     nbits = 12 # number of bits in a chromosome / solution
     xycutpoint = 6 # point in the solution to split into x, y
 
@@ -493,7 +493,8 @@ if __name__ == "__main__":
         "Pm": Pm,
         "gmax": gmax,
         "nbits": nbits,
-        "xycutpoint": xycutpoint
+        "xycutpoint": xycutpoint,
+        "objective": "six-hump camelback"
     }
     results = {
         "params": params,

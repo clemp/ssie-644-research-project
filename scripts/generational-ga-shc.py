@@ -9,6 +9,7 @@ import hashlib
 import json
 import uuid
 import pickle
+from utils import *
 
 def generate_id():
     return str(uuid.uuid4())
@@ -291,6 +292,25 @@ def obj_booth(solution: tuple) -> float:
     
     z = pow((x + 2*y - 7), 2) + pow((2*x + y - 5), 2)
     return z
+
+def tournament_selection(population:list, k:int) -> str:
+    """Select a solution from the population using tournament selection.
+
+    Args:
+        population (list): a list of solutions, eg ["010011011",..].
+        k (int): the number of solutions to select from the population to compete in the tournament.
+
+    Returns:
+        str: the selected solution
+    """
+    # randomly select k solutions from the population
+    # sort the solutions by fitness
+    # return the best solution
+    competitors = random.sample(population, k)
+    competitors = sorted(competitors, key=lambda x: x[2])
+    parent = competitors[0][0]
+    return parent
+
 def GA(
         bounds, # dictionary of domain bounds for each variable x, y
         Pc = 1.00, # crossover probability
@@ -353,8 +373,10 @@ def GA(
             # fitness = objective((x,y))
             fitness = obj_booth((x,y))
             
+            schemata = generate_schemas_from_solution(solution)
+            schemata = schemata[:-1]
             # Add to list that will be sorted later.
-            generation_fitnesses.append((solution, (x,y), fitness))
+            generation_fitnesses.append((solution, (x,y), fitness, schemata))
 
         # TODO: implement tournament selection method.
         # Create the next generation
@@ -389,8 +411,12 @@ def GA(
         # TODO: create a network model to represent the parent-child relationships
         # generation_fitnesses = []
         for i in range(int(n/2)):
-            parents = np.random.choice(population, 2, p=ranks)
-
+            # Tournament selection of parents
+            parent1 = tournament_selection(generation_fitnesses, 4)
+            parent2 = tournament_selection(generation_fitnesses, 4)
+            parents = [parent1, parent2]
+            # parents = np.random.choice(population, 2, p=ranks)
+            
             # reproduction steps
             # crossover the parents to create children of the parents with prob Pc
             if random.random() <= Pc:
@@ -404,10 +430,12 @@ def GA(
 
                 # add the child the the new population this generation
                 new_population.append(children[i])
+        generation_population_avg_fitness = np.average([s[2] for s in generation_fitnesses])
         # Save data from this run to a data structure
         state["generation"] = g
         state["population"] = population
         state["generation_fitnesses"] = generation_fitnesses
+        state["generation_population_avg_fitness"] = generation_population_avg_fitness
         state["final_solution"] = final_solution
         state["final_fitness"] = final_fitness
 
@@ -424,7 +452,7 @@ if __name__ == "__main__":
     # wildcard_schemas = generate_schemas(nbits=nbits)
     # Inialize a random seed then change the random seed 10 times.
     # random_seeds = [random.randint(0,1000) for i in range(10)]
-    seed = 2923408
+    seed = 295308
     random.seed(seed)
 
     # Six-hump camelback bounds
@@ -440,12 +468,12 @@ if __name__ == "__main__":
             "y": ybounds
     }
 
-    n = 20   # population size
+    n = 50   # population size
     Pc = 1.00 # crossover probability
     Pm = 0.01  # mutation probability
-    gmax = 100 # number of generations
-    nbits = 4 # number of bits in a chromosome / solution
-    xycutpoint = 2 # point in the solution to split into x, y
+    gmax = 25 # number of generations
+    nbits = 12 # number of bits in a chromosome / solution
+    xycutpoint = 6 # point in the solution to split into x, y
 
     # test_pop = ["0000000000000000", "0101010101010101", "1100110011001100"]
     # # schemata = generate_alL_schemas(nbits=nbits)

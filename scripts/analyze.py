@@ -70,7 +70,7 @@ def stats_generation_schema_fitnesses(generation_schemata_fitnesses):
 
 if __name__ == '__main__':
     # Read in data
-    fname = "b38f9a54-ac6f-4e8f-92dc-50df322ca9c1"
+    fname = "dcdd4a11-71f7-4a45-95bf-e6de05d59363"
     generation_fitnesses = read_pickle_file("./data/" + fname + ".pickle")
     # schemas = generate_schemas(generation_fitnesses)
     schemata_fitnesses = {}

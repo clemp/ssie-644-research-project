@@ -214,11 +214,15 @@ def binary_value(bitstring:str) -> int:
             pass
     return value
 
-def crossover(parents:list) -> str:
+def crossover(parents:list, strategy="uniform") -> str:
     """
     Randomly select a cutpoint and swap tails 
     between two parents.
     """
+    # make sure the strategy is one of the available strategies
+    if strategy not in ["single point", "two point", "uniform"]:
+        raise Exception
+    
     # make sure there's only two parents
     if len(parents) > 2:
         raise Exception
@@ -307,17 +311,16 @@ def tournament_selection(population:list, k:int) -> str:
     # sort the solutions by fitness
     # return the best solution
     competitors = random.sample(population, k)
-    competitors = sorted(competitors, key=lambda x: x[2])
-    parent = competitors[0][0]
-    return parent
+    winner = min(competitors, key=lambda x: x[2])
+    return winner
 
 def GA(
         bounds, # dictionary of domain bounds for each variable x, y
         Pc = 1.00, # crossover probability
         Pm = 0.01, # mutation probability
-        n = 250, # population size. the number of solutions per generation.
+        n = 25, # population size. the number of solutions per generation.
         nbits = 16, # number of bits in a chromosome / solution
-                     # x: first 8 bits, y: last 8 bits
+                    # x: first 8 bits, y: last 8 bits
         xycutpoint = 8, # first 4 bits are x, the rest are y
         gmax = 100 # maximum number of generations. 
     ):
@@ -326,16 +329,11 @@ def GA(
 
     # BEGIN GENETIC ALGORITHM
     # Initialize a generation 0 population.
-    population = []
-
-    # fill it with solutions
-    for j in range(n): # population size
-        solution = generate_solution(nbits)
-        population.append(solution)
+    population = [generate_solution(nbits) for _ in range(n)]
 
     # initialize final_solution and final_fitness variables
-    final_solution = False
-    final_fitness = False
+    # final_solution = False
+    # final_fitness = False
     
     # create data structure to hold records from each generation
     # these will be used to construct the final dataset that's returned
@@ -348,94 +346,56 @@ def GA(
         # Initialize list of fitnesses for this population
         generation_fitnesses = []
 
+        # Decode into x, y points for fitness testing
         for solution in population:
-            # Decode into x, y points for fitness testing
             bitx = solution[:xycutpoint]
             bity = solution[xycutpoint:]
             x, y = decode(bitstring=solution, cutpoint=xycutpoint, bounds=bounds)
             # Calculate fitness
             # fitness = objective((x,y))
-            fitness = obj_booth((x,y))
+            fitness = obj_shc((x,y))
 
             # Store results
-            generation_fitnesses.append((solution, fitness))
+            generation_fitnesses.append((solution, (x,y), fitness))
 
-        # Rank the initial population (gen 0) to identify the starting optimal solution
-        generation_fitnesses = []
-        for solution in population:
-            # Decode into x,y points for fitness testing
-            bitx = solution[:xycutpoint]
-            bity = solution[xycutpoint:]
-            
-            x, y = decode(bitstring=solution, cutpoint=xycutpoint, bounds=bounds)
-
-            # encoded = encode(solution=solution, cutpoint=4, bounds=bounds)
-            # fitness = objective((x,y))
-            fitness = obj_booth((x,y))
-            
-            schemata = generate_schemas_from_solution(solution)
-            schemata = schemata[:-1]
-            # Add to list that will be sorted later.
-            generation_fitnesses.append((solution, (x,y), fitness, schemata))
-
-        # TODO: implement tournament selection method.
-        # Create the next generation
-        generation_fitnesses = sorted(generation_fitnesses, key=lambda x: x[2])
-        population = [x[0] for x in generation_fitnesses]
-        num_solutions = len(generation_fitnesses)
+        # Select parents for crossover using tournament selection
+        parents = [tournament_selection(generation_fitnesses, 4) for _ in range(n)]
         
-        # rank and create selection probabilities.
-        # sum_ranks = (num_solutions * (num_solutions + 1) / 2)
-        # ranks = [round((num_solutions-i)/sum_ranks, 8) for i in range(num_solutions)]
-
-        # # normalize the ranks (numpy floating decimal issue)
-        # ranks = [p/sum(ranks) for p in ranks]
-        
-        # generation best solution
-        generation_solution = generation_fitnesses[0]
-
-        # generation best fitness
-        generation_fitness = generation_solution[2]
-        
-        # if this is the first run, intialize the final solution.
-        if final_fitness is False or final_solution is False:
-            final_fitness = generation_fitness
-            final_solution = generation_solution
-        # calculate final fitness
-        elif generation_fitness < final_fitness:
-            final_fitness = generation_fitness
-            final_solution = generation_solution                
-
-        # Create a new population for the next generation.
+        # Create the next generation using uniform crossover and mutation
         new_population = []
-        # TODO: create a network model to represent the parent-child relationships
-        # generation_fitnesses = []
-        for i in range(int(n/2)):
-            # Tournament selection of parents
-            parent1 = tournament_selection(generation_fitnesses, 6)
-            parent2 = tournament_selection(generation_fitnesses, 6)
-            parents = [parent1, parent2]
-            # parents = np.random.choice(population, 2, p=ranks)
-            
-            # reproduction steps
-            # crossover the parents to create children of the parents with prob Pc
-            if random.random() <= Pc:
-                children = crossover(parents)
-            else:
-                children = parents
-            # mutate the children with prob Pm (per bit)
-            for i, child in enumerate(children):
-                mutation = mutate(child, Pc)
-                children[i] = mutation
+        for i in range(0, len(parents)-1, 2):
+            # Take only the chromosome from the parent data structure
+            parent1 = parents[i][0]
+            parent2 = parents[i + 1][0]
 
-                # add the child the the new population this generation
-                new_population.append(children[i])
-        generation_population_avg_fitness = np.average([s[2] for s in generation_fitnesses])
+            # Perform uniform crossover
+            crossover_point = random.randint(1, 11)
+            child = parent1[:crossover_point] + parent2[crossover_point:]
+
+            # Mutate the child
+            child = mutate(child, Pm)
+
+            new_population.append(child)
+        # Record the best fitness of the generation
+        generation_best_solution = min(generation_fitnesses, key=lambda x: x[2])
+        generation_best_fitness = generation_best_solution[2]
+        
+        # Record best fitness for all generations so far
+        if g == 0:
+            final_solution = generation_best_solution
+            final_fitness = generation_best_fitness
+        else:
+            if generation_best_fitness < final_fitness:
+                final_solution = generation_best_solution
+                final_fitness = generation_best_fitness
+            else:
+                pass
         # Save data from this run to a data structure
         state["generation"] = g
         state["population"] = population
         state["generation_fitnesses"] = generation_fitnesses
-        state["generation_population_avg_fitness"] = generation_population_avg_fitness
+        state["best_solution"] = generation_best_solution
+        state["best_fitness"] = generation_best_fitness
         state["final_solution"] = final_solution
         state["final_fitness"] = final_fitness
 
@@ -468,12 +428,12 @@ if __name__ == "__main__":
             "y": ybounds
     }
 
-    n = 100   # population size
+    n = 25   # population size
     Pc = 1.00 # crossover probability
     Pm = 0.01  # mutation probability
     gmax = 50 # number of generations
-    nbits = 12 # number of bits in a chromosome / solution
-    xycutpoint = 6 # point in the solution to split into x, y
+    nbits = 16 # number of bits in a chromosome / solution
+    xycutpoint = 8 # point in the solution to split into x, y
 
     # test_pop = ["0000000000000000", "0101010101010101", "1100110011001100"]
     # # schemata = generate_alL_schemas(nbits=nbits)

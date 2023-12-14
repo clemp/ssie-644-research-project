@@ -9,6 +9,7 @@ import hashlib
 import json
 import uuid
 import pickle
+import os
 from utils import *
 
 def generate_id():
@@ -318,7 +319,7 @@ def GA(
         bounds, # dictionary of domain bounds for each variable x, y
         Pc = 1.00, # crossover probability
         Pm = 0.01, # mutation probability
-        n = 25, # population size. the number of solutions per generation.
+        n = 24, # population size. the number of solutions per generation.
         nbits = 16, # number of bits in a chromosome / solution
                     # x: first 8 bits, y: last 8 bits
         xycutpoint = 8, # first 4 bits are x, the rest are y
@@ -363,10 +364,13 @@ def GA(
         
         # Create the next generation using uniform crossover and mutation
         new_population = []
-        for i in range(0, len(parents)-1, 2):
+        # for i in range(0, len(parents)-1):
+        for i in range(n):
             # Take only the chromosome from the parent data structure
-            parent1 = parents[i][0]
-            parent2 = parents[i + 1][0]
+            parent1 = random.sample(parents, 1)[0][0]
+            parent2 = random.sample(parents, 1)[0][0]
+            # parent1 = parents[i][0]
+            # parent2 = parents[i + 1][0]
 
             # Perform uniform crossover
             crossover_point = random.randint(1, 11)
@@ -412,7 +416,7 @@ if __name__ == "__main__":
     # wildcard_schemas = generate_schemas(nbits=nbits)
     # Inialize a random seed then change the random seed 10 times.
     # random_seeds = [random.randint(0,1000) for i in range(10)]
-    seed = 2908
+    seed = 289908
     random.seed(seed)
 
     # Six-hump camelback bounds
@@ -428,7 +432,7 @@ if __name__ == "__main__":
             "y": ybounds
     }
 
-    n = 25   # population size
+    n = 50   # population size
     Pc = 1.00 # crossover probability
     Pm = 0.01  # mutation probability
     gmax = 50 # number of generations
@@ -461,10 +465,21 @@ if __name__ == "__main__":
         "data": simdata
     }
     idx = generate_id()
+    output_fname = "./data/objective/six-hump-camelback/schemata/" + idx + "/01-raw.pickle"
+    
     print("Writing data for simulation: ", idx)
-    # Create pickle file
-    with open(f"./data/{idx}.pickle", "wb") as f:
+    print("Filename: ", output_fname)
+    
+    dir_name = os.path.dirname(output_fname)
+
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    with open(output_fname, 'wb') as f:
         pickle.dump(results, f)
+    # # Create pickle file
+    # with open(f"./data/{idx}.pickle", "wb") as f:
+    #     pickle.dump(results, f)
     
   # Write params file
     headers = results['params'].keys()

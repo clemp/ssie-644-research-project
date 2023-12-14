@@ -70,8 +70,8 @@ def stats_generation_schema_fitnesses(generation_schemata_fitnesses):
 
 if __name__ == '__main__':
     # Read in data
-    fname = "b9e39d66-c61e-4576-9a46-8833969b59c9"
-    states = read_pickle_file("./data/" + fname + ".pickle")
+    fname = "01d842b2-f369-4681-b1d3-a29f6f9095a5"
+    states = read_pickle_file("./data/objective/six-hump-camelback/schemata/" + fname + "/01-raw.pickle")
     # schemas = generate_schemas(generation_fitnesses)
     schemata_fitnesses = {}
     generation_schemata_fitnesses = {}
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     # df.index.names = ['generation', 'schema']
     # # Write data to file
     print("Writing data to file...")
-    print("Filename: ", fname + ".pickle")
-    output_fname = "./data/objective/six-hump-camelback/schemata/" + fname + ".pickle"
     
+    output_fname = "./data/objective/six-hump-camelback/schemata/" + fname + "/02-transformed.pickle"
+    print("Filename: ", output_fname)
     dir_name = os.path.dirname(output_fname)
 
     if not os.path.exists(dir_name):

@@ -146,7 +146,7 @@ def count_schemata(schemata: list, counts_dict: dict) -> dict:
 #     # number of non wildcard bits
     return sum(1 for bit in allele if bit != "*")
 
-def length(schema:str) -> int:
+def defining_length(schema:str) -> int:
     # find first non-wildcard
     for i, bit in enumerate(schema):
         if bit != "*":
@@ -157,10 +157,5 @@ def length(schema:str) -> int:
         if bit != "*":
             end = (len(schema)-1)-i
             break
-        
-    # start = next(bit for bit in allele if bit != "*")
-    # [*,0,0,*,1,*]
-    # [^*]
-    # end = next(bit for bit in reversed(allele) if bit != "*")
     l = end - start
     return l

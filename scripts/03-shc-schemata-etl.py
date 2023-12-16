@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     # Write the sampled dataframe
     print("Writing data to file...")
-    
+    print("Writing sampled data...")
     output_fname = "./data/objective/six-hump-camelback/schemata/" + fname + "/03-sampled.pickle"
     print("Filename: ", output_fname)
     dir_name = os.path.dirname(output_fname)
@@ -92,5 +92,16 @@ if __name__ == "__main__":
 
     with open(output_fname, 'wb') as f:
         pickle.dump(df_sampled, f)
-    print(df_sampled)
+
+    print("Writing full population...")
+    output_fname = "./data/objective/six-hump-camelback/schemata/" + fname + "/03-full-population.pickle"
+    print("Filename: ", output_fname)
+    dir_name = os.path.dirname(output_fname)
+
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    with open(output_fname, 'wb') as f:
+        pickle.dump(df, f)
+    print(df)
 
